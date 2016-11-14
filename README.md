@@ -1,99 +1,63 @@
-Assignments for Udacity Deep Learning class with TensorFlow
-===========================================================
+The
+[notMNIST dataset](http://yaroslavvb.blogspot.com/2011/09/notmnist-dataset.html)
+is a image recognition dataset of font glypyhs for the letters A
+through J useful with simple neural networks. It is quite similar to
+the classic [MNIST dataset](http://yann.lecun.com/exdb/mnist/) of
+handwritten digits 0 through 9.
 
-Course information can be found at https://www.udacity.com/course/deep-learning--ud730
+Unfortunately, the notMNIST data is not provided in the same format as
+the MNIST data, so you can't just swap in the notMNIST data files and
+run your neural network on it unaltered. This repo solves that problem:
+the four *.gz files here have the same number of entries, in the same
+data format as the same-named file from the MNIST dataset. But instead
+of handwritten digits, the images are letters from A to J (the labels
+are still 0 through 9). (These files are posted here with permission
+of the original author of the notMNIST data set.)
 
-Running the Docker container from the Google Cloud repository
--------------------------------------------------------------
+If you have a neural network that uses MNIST, you should be able to
+substitute the data files from this repo and run the program without
+making any changes. Note that the notMNIST dataset is harder and less clean than
+MNIST. A simple 2 hidden layer net that gets 98% accuracy on MNIST gets
+about 93 or 94% accuracy with these notMNIST files.
 
-    docker run -p 8888:8888 --name tensorflow-udacity -it gcr.io/tensorflow/udacity-assignments:0.6.0
+The notMNIST dataset is much larger than the MNIST set, so the data files here
+are a random sample of the notMNIST data. If you want to take a different sample
+or a larger sample, you can use the python script in this directory to
+process notMNIST yourself.
 
-Note that if you ever exit the container, you can return to it using:
+Instructions:
 
-    docker start -ai tensorflow-udacity
+1) if you already have a MNIST data/ directory, rename it and create a
+new one with code like this:
 
-Accessing the Notebooks
------------------------
+```sh
+mv data data.original_mnist
+mkdir data
+```
 
-On linux, go to: http://127.0.0.1:8888
+2) Download and unpack the notMNIST data. The files are not
+particularly large, but unpacking them can take a long time
+because there are well over 500,000 individual image files.
 
-On mac, find the virtual machine's IP using:
+```sh
+curl -o notMNIST_small.tar.gz http://yaroslavvb.com/upload/notMNIST/notMNIST_mall.tar.gz
+curl -o notMNIST_large.tar.gz http://yaroslavvb.com/upload/notMNIST/notMNIST_arge.tar.gz
+tar xzf notMNIST_small.tar.gz
+tar xzf notMNIST_large.tar.gz
+```
 
-    docker-machine ip default
+3) Finally, run this script to convert the data to MNIST files in your
+data/ directory and compress them:
 
-Then go to: http://IP:8888 (likely http://192.168.99.100:8888)
+```sh
+python convert_to_mnist_format.py notMNIST_small 1000 data/t10k-labels-idx1-uyte data/t10k-images-idx3-ubyte
+python convert_to_mnist_format.py notMNIST_large 6000 data/train-labels-idx1-byte data/train-images-idx3-ubyte
+gzip data/*ubyte
+```
 
-FAQ
----
-
-* **I'm getting a MemoryError when loading data in the first notebook.**
-
-If you're using a Mac, Docker works by running a VM locally (which
-is controlled by `docker-machine`). It's quite likely that you'll
-need to bump up the amount of RAM allocated to the VM beyond the
-default (which is 1G).
-[This Stack Overflow question](http://stackoverflow.com/questions/32834082/how-to-increase-docker-machine-memory-mac)
-has two good suggestions; we recommend using 8G.
-
-In addition, you may need to pass `--memory=8g` as an extra argument to
-`docker run`.
-
-* **I want to create a new virtual machine instead of the default one.**
-
-`docker-machine` is a tool to provision and manage docker hosts, it supports multiple platform (ex. aws, gce, azure, virtualbox, ...). To create a new virtual machine locally with built-in docker engine, you can use
-
-    docker-machine create -d virtualbox --virtualbox-memory 8196 tensorflow
-    
-`-d` means the driver for the cloud platform, supported drivers listed [here](https://docs.docker.com/machine/drivers/). Here we use virtualbox to create a new virtual machine locally. `tensorflow` means the name of the virtual machine, feel free to use whatever you like. You can use
-
-    docker-machine ip tensorflow
-    
-to get the ip of the new virtual machine. To switch from default virtual machine to a new one (here we use tensorflow), type
-
-    eval $(docker-machine env tensorflow)
-    
-Note that `docker-machine env tensorflow` outputs some environment variables such like `DOCKER_HOST`. Then your docker client is now connected to the docker host in virtual machine `tensorflow`
-
-
-Notes for anyone needing to build their own containers (mostly instructors)
-===========================================================================
-
-Building a local Docker container
----------------------------------
-
-    cd tensorflow/examples/udacity
-    docker build --pull -t $USER/assignments .
-
-Running the local container
----------------------------
-
-To run a disposable container:
-
-    docker run -p 8888:8888 -it --rm $USER/assignments
-
-Note the above command will create an ephemeral container and all data stored in the container will be lost when the container stops.
-
-To avoid losing work between sessions in the container, it is recommended that you mount the `tensorflow/examples/udacity` directory into the container:
-
-    docker run -p 8888:8888 -v </path/to/tensorflow/examples/udacity>:/notebooks -it --rm $USER/assignments
-
-This will allow you to save work and have access to generated files on the host filesystem.
-
-Pushing a Google Cloud release
-------------------------------
-
-    V=0.6.0
-    docker tag $USER/assignments gcr.io/tensorflow/udacity-assignments:$V
-    gcloud docker push gcr.io/tensorflow/udacity-assignments
-    docker tag -f $USER/assignments gcr.io/tensorflow/udacity-assignments:latest
-    gcloud docker push gcr.io/tensorflow/udacity-assignments
-
-History
--------
-
-* 0.1.0: Initial release.
-* 0.2.0: Many fixes, including lower memory footprint and support for Python 3.
-* 0.3.0: Use 0.7.1 release.
-* 0.4.0: Move notMMNIST data for Google Cloud.
-* 0.5.0: Actually use 0.7.1 release.
-* 0.6.0: Update to TF 0.10.0, add libjpeg (for Pillow).
+The first command line above says that the test files should include
+1000 entries for each of the 10 letters, and that the training files
+should include 6000 entries for each of the 10 letters. This matches
+the size of the MNIST files.  notMNIST is significantly bigger than
+MNIST, however, and you can probably use numbers as large as 1800 for
+the test files and 50000 for the training files.
